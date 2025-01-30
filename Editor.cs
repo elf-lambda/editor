@@ -4,6 +4,15 @@ using Raylib_cs;
 using System.Numerics;
 namespace editor;
 
+public enum CursorPos
+{
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+
 class Editor
 {
     public List<List<char>> _chars = new List<List<char>>();
@@ -13,7 +22,9 @@ class Editor
     private int cols = (10 + height + 10) / Mfont.CHAR_IMAGE_HEIGHT;
     public static int width = 600;
     public static int height = 480;
-
+    public int padding { get; set; } = 10;
+    public int cursorX { get; set; }
+    public int cursorY { get; set; }
 
     public Editor()
     {
@@ -22,6 +33,43 @@ class Editor
         {
             List<char> row = new List<char>(new char[cols]);
             _chars.Add(row);
+        }
+        cursorX = padding;
+        cursorY = padding;
+    }
+    public void ResetCursorX() => cursorX = padding;
+    public void ResetCursorY() => cursorY = padding;
+
+    public void ResetCursor()
+    {
+        cursorX = padding;
+        cursorY = padding;
+    }
+
+    public void MoveCursor(CursorPos pos)
+    {
+        switch (pos)
+        {
+            case CursorPos.Left:
+                {
+                    cursorX -= Mfont.CHAR_IMAGE_WIDTH;
+                    break;
+                }
+            case CursorPos.Right:
+                {
+                    cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                    break;
+                }
+            case CursorPos.Up:
+                {
+                    cursorY -= Mfont.CHAR_IMAGE_HEIGHT;
+                    break;
+                }
+            case CursorPos.Down:
+                {
+                    cursorY += Mfont.CHAR_IMAGE_HEIGHT;
+                    break;
+                }
         }
     }
 

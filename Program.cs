@@ -12,13 +12,9 @@ class Program
     {
         Raylib.InitWindow(Editor.width, Editor.height, "editor");
         var fontTexture = Mfont.CreateFontTextureAtlas();
-        int padding = 10;
+        string? display = null;
         int startX = 0;
         int startY = 0;
-        int cursorX = padding;
-        int cursorY = padding;
-        string? display = null;
-
         var editor = new Editor();
 
 
@@ -38,25 +34,30 @@ class Program
                 System.Console.WriteLine(editor.GetDisplay());
                 System.Console.WriteLine("Enter");
 
-                cursorY += Mfont.CHAR_IMAGE_HEIGHT;
-                cursorX = padding;
+                // cursorY += Mfont.CHAR_IMAGE_HEIGHT;
+                // cursorX = padding;
+                editor.MoveCursor(CursorPos.Down);
+                editor.ResetCursorX();
+                // editor.cursorX = editor.padding;
+
             }
             else if (pChar == 1)
             {
                 // If backspace
                 System.Console.WriteLine("Backspace");
-                if (cursorX == padding && cursorY == padding)
+                if (editor.cursorX == editor.padding && editor.cursorY == editor.padding)
                 {
                     Raylib.EndDrawing();
                     continue;
                 }
-                if (cursorX == padding)
+                if (editor.cursorX == editor.padding)
                 {
-                    if (cursorY != padding)
+                    if (editor.cursorY != editor.padding)
                     {
                         // if at start of line go to end of the line above
-                        cursorY -= Mfont.CHAR_IMAGE_HEIGHT;
-                        cursorX = (editor.GetLineWidth(startY - 1)) * Mfont.CHAR_IMAGE_WIDTH + padding;
+                        // cursorY -= Mfont.CHAR_IMAGE_HEIGHT;
+                        editor.MoveCursor(CursorPos.Up);
+                        editor.cursorX = (editor.GetLineWidth(startY - 1)) * Mfont.CHAR_IMAGE_WIDTH + editor.padding;
 
                         startX = editor.GetLineWidth(startY - 1);
                         startY--;
@@ -71,7 +72,8 @@ class Program
                 startX--;
                 editor.RemoveAt(startX, startY);
 
-                cursorX -= Mfont.CHAR_IMAGE_WIDTH;
+                // cursorX -= Mfont.CHAR_IMAGE_WIDTH;
+                editor.MoveCursor(CursorPos.Left);
 
                 System.Console.WriteLine(editor.GetDisplay());
             }
@@ -82,7 +84,8 @@ class Program
                 editor.AddAt(startX, startY, pChar);
                 startX++;
 
-                cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                // cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                editor.MoveCursor(CursorPos.Right);
             }
 
 
@@ -94,7 +97,8 @@ class Program
                 if (startX < editor.GetLineWidth(startY))
                 {
                     startX++;
-                    cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                    // cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                    editor.MoveCursor(CursorPos.Right);
                 }
             }
             else if (Raylib.IsKeyPressed(KeyboardKey.Left))
@@ -104,7 +108,8 @@ class Program
                 if (startX > 0)
                 {
                     startX--;
-                    cursorX -= Mfont.CHAR_IMAGE_WIDTH;
+                    // cursorX -= Mfont.CHAR_IMAGE_WIDTH;
+                    editor.MoveCursor(CursorPos.Left);
                 }
             }
             else if (Raylib.IsKeyPressed(KeyboardKey.Down))
@@ -115,12 +120,13 @@ class Program
                 if (nextLineWidth > 0)  // Line exists and has content
                 {
                     startY++;
-                    cursorY += Mfont.CHAR_IMAGE_HEIGHT;
+                    // cursorY += Mfont.CHAR_IMAGE_HEIGHT;
+                    editor.MoveCursor(CursorPos.Down);
                     // Adjust X position if current X is beyond the next line's width
                     if (startX > nextLineWidth - 1)
                     {
                         startX = nextLineWidth - 1;
-                        cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + padding;
+                        editor.cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + editor.padding;
                     }
                 }
             }
@@ -131,13 +137,14 @@ class Program
                 if (startY > 0)
                 {
                     startY--;
-                    cursorY -= Mfont.CHAR_IMAGE_HEIGHT;
+                    // cursorY -= Mfont.CHAR_IMAGE_HEIGHT;
+                    editor.MoveCursor(CursorPos.Up);
                     // Adjust X position if current X is beyond the previous line's width
                     int prevLineWidth = editor.GetLineWidth(startY);
                     if (startX > prevLineWidth - 1)
                     {
                         startX = prevLineWidth - 1;
-                        cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + padding;
+                        editor.cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + editor.padding;
                     }
                 }
             }
@@ -179,8 +186,9 @@ class Program
                         startX = 0;
                         startY = 0;
 
-                        cursorX = padding;
-                        cursorY = padding;
+                        editor.ResetCursor();
+                        // cursorX = padding;
+                        // cursorY = padding;
                         // Add the file content character by character
                         for (int i = 0; i < content.Length; i++)
                         {
@@ -190,14 +198,18 @@ class Program
                                 editor.AddAt(startX, startY, '\n');
                                 startY++;
                                 startX = 0;
-                                cursorY += Mfont.CHAR_IMAGE_HEIGHT;
-                                cursorX = padding;
+                                // cursorY += Mfont.CHAR_IMAGE_HEIGHT;
+                                // cursorX = padding;
+                                editor.MoveCursor(CursorPos.Down);
+                                editor.ResetCursorX();
+
                             }
                             else
                             {
                                 editor.AddAt(startX, startY, c);
                                 startX++;
-                                cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                                // cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                                editor.MoveCursor(CursorPos.Right);
                             }
                         }
 
@@ -218,8 +230,8 @@ class Program
 
             Raylib.DrawRectangle(0, Editor.height - 20, Editor.width, Editor.height, Color.DarkBlue);
             Mfont.DrawText(DateTime.Now.ToString("HH:mm:ss tt"), 10, Editor.height - 15);
-            Mfont.DrawText(display, padding, padding, Mfont.CHAR_IMAGE_WIDTH);
-            Mfont.DrawCharacter(Convert.ToChar(3), cursorX, cursorY);
+            Mfont.DrawText(display, editor.padding, editor.padding, Mfont.CHAR_IMAGE_WIDTH);
+            Mfont.DrawCharacter(Convert.ToChar(3), editor.cursorX, editor.cursorY);
 
             Thread.Sleep(33);
             Raylib.EndDrawing();
