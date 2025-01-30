@@ -41,13 +41,28 @@ class Program
                 // editor.cursorX = editor.padding;
 
             }
-            else if (pChar == 1)
+            else if (pChar != '\0')
+            {
+                System.Console.WriteLine(pChar);
+                System.Console.WriteLine($"{startX}, {startY}");
+                editor.AddAt(startX, startY, pChar);
+                startX++;
+
+                // cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                editor.MoveCursor(CursorPos.Right);
+            }
+
+            if (Raylib.IsKeyPressedRepeat(KeyboardKey.Backspace) ||
+                Raylib.IsKeyPressed(KeyboardKey.Backspace))
             {
                 // If backspace
                 System.Console.WriteLine("Backspace");
                 if (editor.cursorX == editor.padding && editor.cursorY == editor.padding)
                 {
+                    display = editor.GetDisplay();
+                    tempUI(display, editor);
                     Raylib.EndDrawing();
+                    // Thread.Sleep(33);
                     continue;
                 }
                 if (editor.cursorX == editor.padding)
@@ -77,20 +92,10 @@ class Program
 
                 System.Console.WriteLine(editor.GetDisplay());
             }
-            else if (pChar != '\0')
-            {
-                System.Console.WriteLine(pChar);
-                System.Console.WriteLine($"{startX}, {startY}");
-                editor.AddAt(startX, startY, pChar);
-                startX++;
-
-                // cursorX += Mfont.CHAR_IMAGE_WIDTH;
-                editor.MoveCursor(CursorPos.Right);
-            }
 
 
             // Handle Arrow Key Movements
-            if (Raylib.IsKeyPressed(KeyboardKey.Right))
+            if (Raylib.IsKeyDown(KeyboardKey.Right))
             {
                 // Move cursor right if we're not at the end of the line
                 // Check if we can move right (not at end of line)
@@ -101,7 +106,7 @@ class Program
                     editor.MoveCursor(CursorPos.Right);
                 }
             }
-            else if (Raylib.IsKeyPressed(KeyboardKey.Left))
+            else if (Raylib.IsKeyDown(KeyboardKey.Left))
             {
                 // Move cursor left if we're not at the start of the line
                 // Check if we can move left (not at start of line)
@@ -112,7 +117,7 @@ class Program
                     editor.MoveCursor(CursorPos.Left);
                 }
             }
-            else if (Raylib.IsKeyPressed(KeyboardKey.Down))
+            else if (Raylib.IsKeyDown(KeyboardKey.Down))
             {
                 // Move cursor down to the next row if not at the bottom
                 // Check if there's a line below and it has content
@@ -130,7 +135,7 @@ class Program
                     }
                 }
             }
-            else if (Raylib.IsKeyPressed(KeyboardKey.Up))
+            else if (Raylib.IsKeyDown(KeyboardKey.Up))
             {
                 // Move cursor up to the previous row if not at the top
                 // Check if we can move up (not at first line)
@@ -227,19 +232,26 @@ class Program
 
 
             // Pseudo UI
-
-            Raylib.DrawRectangle(0, Editor.height - 20, Editor.width, Editor.height, Color.DarkBlue);
-            Mfont.DrawText(DateTime.Now.ToString("HH:mm:ss tt"), 10, Editor.height - 15);
-            Mfont.DrawText(display, editor.padding, editor.padding, Mfont.CHAR_IMAGE_WIDTH);
-            Mfont.DrawCharacter(Convert.ToChar(3), editor.cursorX, editor.cursorY);
-
-            Thread.Sleep(33);
+            tempUI(display, editor);
+            // Raylib.DrawRectangle(0, Editor.height - 20, Editor.width, Editor.height, Color.DarkBlue);
+            // Mfont.DrawText(DateTime.Now.ToString("HH:mm:ss tt"), 10, Editor.height - 15);
+            // Mfont.DrawText(display, editor.padding, editor.padding, Mfont.CHAR_IMAGE_WIDTH);
+            // Mfont.DrawCharacter(Convert.ToChar(3), editor.cursorX, editor.cursorY);
             Raylib.EndDrawing();
+            Thread.Sleep(33);
         }
 
         Raylib.CloseWindow();
     }
 
+
+    static void tempUI(string display, Editor editor)
+    {
+        Raylib.DrawRectangle(0, Editor.height - 20, Editor.width, Editor.height, Color.DarkBlue);
+        Mfont.DrawText(DateTime.Now.ToString("HH:mm:ss tt"), 10, Editor.height - 15);
+        Mfont.DrawText(display, editor.padding, editor.padding, Mfont.CHAR_IMAGE_WIDTH);
+        Mfont.DrawCharacter(Convert.ToChar(3), editor.cursorX, editor.cursorY);
+    }
 
     static string GetIncrementalFileName(string baseFileName, string extension)
     {
@@ -261,7 +273,7 @@ class Program
 
         // Handle alphanumeric input via GetCharPressed()
         if (Raylib.IsKeyPressed(KeyboardKey.Enter)) return '\n';
-        if (Raylib.IsKeyPressed(KeyboardKey.Backspace)) return Convert.ToChar(1);
+        // if (Raylib.IsKeyPressed(KeyboardKey.Backspace)) return Convert.ToChar(1);
 
         int key = Raylib.GetCharPressed();
         if (key != 0)
