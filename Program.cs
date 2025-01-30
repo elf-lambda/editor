@@ -95,7 +95,8 @@ class Program
 
 
             // Handle Arrow Key Movements
-            if (Raylib.IsKeyDown(KeyboardKey.Right))
+            if (Raylib.IsKeyPressed(KeyboardKey.Right) ||
+                Raylib.IsKeyPressedRepeat(KeyboardKey.Right))
             {
                 // Move cursor right if we're not at the end of the line
                 // Check if we can move right (not at end of line)
@@ -106,7 +107,8 @@ class Program
                     editor.MoveCursor(CursorPos.Right);
                 }
             }
-            else if (Raylib.IsKeyDown(KeyboardKey.Left))
+            else if (Raylib.IsKeyPressed(KeyboardKey.Left) ||
+                     Raylib.IsKeyPressedRepeat(KeyboardKey.Left))
             {
                 // Move cursor left if we're not at the start of the line
                 // Check if we can move left (not at start of line)
@@ -117,7 +119,8 @@ class Program
                     editor.MoveCursor(CursorPos.Left);
                 }
             }
-            else if (Raylib.IsKeyDown(KeyboardKey.Down))
+            else if (Raylib.IsKeyPressed(KeyboardKey.Down) ||
+                     Raylib.IsKeyPressedRepeat(KeyboardKey.Down))
             {
                 // Move cursor down to the next row if not at the bottom
                 // Check if there's a line below and it has content
@@ -135,7 +138,8 @@ class Program
                     }
                 }
             }
-            else if (Raylib.IsKeyDown(KeyboardKey.Up))
+            else if (Raylib.IsKeyPressed(KeyboardKey.Up) ||
+                     Raylib.IsKeyPressedRepeat(KeyboardKey.Up))
             {
                 // Move cursor up to the previous row if not at the top
                 // Check if we can move up (not at first line)
