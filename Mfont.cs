@@ -20,7 +20,7 @@ public static class Mfont
     public const int CHAR_IMAGE_HEIGHT = 14;
 
     // draw a single FontCharacter at position x, y
-    public static void DrawCharacter(char c, int startX, int startY)
+    public static void DrawCharacter(char c, int startX, int startY, Color clr, bool useColor)
     {
         FontCharacter fontCharacter = FontCharacters[c];
 
@@ -35,38 +35,44 @@ public static class Mfont
 
                 int color = fontCharacter.data[charIndex];
                 if (color == 0x000000) continue;
+                if (!useColor)
+                {
+                    int r = (color >> 16) & 0xFF;
+                    int g = (color >> 8) & 0xFF;
+                    int b = (color >> 0) & 0xFF;
+                    Raylib.DrawPixel(imgX, imgY, new Color(r, g, b));
+                }
+                else
+                {
+                    Raylib.DrawPixel(imgX, imgY, clr);
+                }
 
-                int r = (color >> 16) & 0xFF;
-                int g = (color >> 8) & 0xFF;
-                int b = (color >> 0) & 0xFF;
-
-                Raylib.DrawPixel(imgX, imgY, new Color(r, g, b));
             }
         }
     }
 
 
     // Draw a string at position x, y with a specified character width
-    public static void DrawText(string input, int posX, int posY, int charWidth = CHAR_IMAGE_WIDTH)
+    public static void DrawText(string input, int posX, int posY, Color color, bool useColor, int charWidth = CHAR_IMAGE_WIDTH)
     {
         int index = 0;
         for (int i = 0; i < input.Length; i++)
         {
             if (input[i] > 127)
             {
-                DrawCharacter(Convert.ToChar(2), posX + (charWidth * index), posY);
+                DrawCharacter(Convert.ToChar(2), posX + (charWidth * index), posY, color, false);
                 index++;
                 continue;
             }
             if (input[i] == '\n')
             {
                 posY += Mfont.CHAR_IMAGE_HEIGHT;
-                posX = 10;
+                posX = Editor.paddingX;
                 index = 0;
             }
             else
             {
-                DrawCharacter(input[i], posX + (charWidth * index), posY);
+                DrawCharacter(input[i], posX + (charWidth * index), posY, color, useColor);
                 index++;
             }
         }

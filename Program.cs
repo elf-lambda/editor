@@ -1,13 +1,18 @@
 ﻿using Raylib_cs;
 using System;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
+using System.Windows.Forms;
+
 namespace editor;
 
 class Program
 {
+    static string currentFile = "Empty Buffer File";
 
+    [STAThread] // For windows forms dialogue
     static void Main(string[] args)
     {
         Raylib.InitWindow(Editor.width, Editor.height, "editor");
@@ -34,11 +39,8 @@ class Program
                 System.Console.WriteLine(editor.GetDisplay());
                 System.Console.WriteLine("Enter");
 
-                // cursorY += Mfont.CHAR_IMAGE_HEIGHT;
-                // cursorX = padding;
                 editor.MoveCursor(CursorPos.Down);
                 editor.ResetCursorX();
-                // editor.cursorX = editor.padding;
 
             }
             else if (pChar != '\0')
@@ -48,7 +50,6 @@ class Program
                 editor.AddAt(startX, startY, pChar);
                 startX++;
 
-                // cursorX += Mfont.CHAR_IMAGE_WIDTH;
                 editor.MoveCursor(CursorPos.Right);
             }
 
@@ -57,22 +58,20 @@ class Program
             {
                 // If backspace
                 System.Console.WriteLine("Backspace");
-                if (editor.cursorX == editor.padding && editor.cursorY == editor.padding)
+                if (editor.cursorX == Editor.paddingX && editor.cursorY == Editor.paddingY)
                 {
                     display = editor.GetDisplay();
-                    tempUI(display, editor);
+                    DrawBaseUI(display, editor);
                     Raylib.EndDrawing();
-                    // Thread.Sleep(33);
                     continue;
                 }
-                if (editor.cursorX == editor.padding)
+                if (editor.cursorX == Editor.paddingX)
                 {
-                    if (editor.cursorY != editor.padding)
+                    if (editor.cursorY != Editor.paddingY)
                     {
                         // if at start of line go to end of the line above
-                        // cursorY -= Mfont.CHAR_IMAGE_HEIGHT;
                         editor.MoveCursor(CursorPos.Up);
-                        editor.cursorX = (editor.GetLineWidth(startY - 1)) * Mfont.CHAR_IMAGE_WIDTH + editor.padding;
+                        editor.cursorX = (editor.GetLineWidth(startY - 1)) * Mfont.CHAR_IMAGE_WIDTH + Editor.paddingX;
 
                         startX = editor.GetLineWidth(startY - 1);
                         startY--;
@@ -87,7 +86,6 @@ class Program
                 startX--;
                 editor.RemoveAt(startX, startY);
 
-                // cursorX -= Mfont.CHAR_IMAGE_WIDTH;
                 editor.MoveCursor(CursorPos.Left);
 
                 System.Console.WriteLine(editor.GetDisplay());
@@ -134,7 +132,7 @@ class Program
                     if (startX > nextLineWidth - 1)
                     {
                         startX = nextLineWidth - 1;
-                        editor.cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + editor.padding;
+                        editor.cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + Editor.paddingX;
                     }
                 }
             }
@@ -153,7 +151,7 @@ class Program
                     if (startX > prevLineWidth - 1)
                     {
                         startX = prevLineWidth - 1;
-                        editor.cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + editor.padding;
+                        editor.cursorX = startX * Mfont.CHAR_IMAGE_WIDTH + Editor.paddingX;
                     }
                 }
             }
@@ -180,53 +178,9 @@ class Program
                 string[] droppedFiles = Raylib.GetDroppedFiles();
                 if (droppedFiles.Length > 0)
                 {
-                    try
+                    if (loadFile(editor, droppedFiles[0], ref startX, ref startY))
                     {
-                        // Get the first dropped file (in case multiple files were dropped)
-                        string filePath = droppedFiles[0];
-                        string content = File.ReadAllText(filePath).Replace(System.Environment.NewLine, "\n");
-                        foreach (var innerList in editor._chars)
-                        {
-                            for (int i = 0; i < innerList.Count; i++)
-                            {
-                                innerList[i] = '\0';  // Set each element to the null character
-                            }
-                        }
-                        startX = 0;
-                        startY = 0;
-
-                        editor.ResetCursor();
-                        // cursorX = padding;
-                        // cursorY = padding;
-                        // Add the file content character by character
-                        for (int i = 0; i < content.Length; i++)
-                        {
-                            char c = content[i];
-                            if (c == '\n')
-                            {
-                                editor.AddAt(startX, startY, '\n');
-                                startY++;
-                                startX = 0;
-                                // cursorY += Mfont.CHAR_IMAGE_HEIGHT;
-                                // cursorX = padding;
-                                editor.MoveCursor(CursorPos.Down);
-                                editor.ResetCursorX();
-
-                            }
-                            else
-                            {
-                                editor.AddAt(startX, startY, c);
-                                startX++;
-                                // cursorX += Mfont.CHAR_IMAGE_WIDTH;
-                                editor.MoveCursor(CursorPos.Right);
-                            }
-                        }
-
-                        System.Console.WriteLine($"Loaded file: {filePath}");
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Console.WriteLine($"Error loading file: {ex.Message}");
+                        currentFile = droppedFiles[0];
                     }
                 }
             }
@@ -236,11 +190,53 @@ class Program
 
 
             // Pseudo UI
-            tempUI(display, editor);
-            // Raylib.DrawRectangle(0, Editor.height - 20, Editor.width, Editor.height, Color.DarkBlue);
-            // Mfont.DrawText(DateTime.Now.ToString("HH:mm:ss tt"), 10, Editor.height - 15);
-            // Mfont.DrawText(display, editor.padding, editor.padding, Mfont.CHAR_IMAGE_WIDTH);
-            // Mfont.DrawCharacter(Convert.ToChar(3), editor.cursorX, editor.cursorY);
+            DrawBaseUI(display, editor);
+            var open_btn = UserInterface.DrawButton("OPEN", 0, 0, 60, 20, Color.DarkGreen, Color.DarkPurple);
+            var save_btn = UserInterface.DrawButton("SAVE", 60, 0, 60, 20, Color.DarkGreen, Color.DarkPurple);
+
+            if (open_btn)
+            {
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                {
+                    openFileDialog.Filter = "All Files (*.*)|*.*"; // Set filter for file types
+                    openFileDialog.Title = "Select a File";
+                    openFileDialog.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory; // Set to current EXE directory
+
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string selectedFilePath = openFileDialog.FileName;
+                        Console.WriteLine("Selected File: " + selectedFilePath);
+                        if (loadFile(editor, selectedFilePath, ref startX, ref startY))
+                        {
+                            currentFile = selectedFilePath;
+                        }
+
+                    }
+                }
+            }
+
+            if (save_btn)
+            {
+                using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+                {
+                    saveFileDialog.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
+                    saveFileDialog.Title = "Save File";
+                    saveFileDialog.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory; // Set to current EXE directory
+
+                    saveFileDialog.DefaultExt = "txt";
+                    saveFileDialog.AddExtension = true;
+
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string selectedFilePath = saveFileDialog.FileName;
+                        Console.WriteLine("File Saved: " + selectedFilePath);
+
+                        // Example: Write some text to the file (optional)
+                        System.IO.File.WriteAllText(selectedFilePath, display);
+                    }
+                }
+            }
+
             Raylib.EndDrawing();
             Thread.Sleep(33);
         }
@@ -249,13 +245,94 @@ class Program
     }
 
 
-    static void tempUI(string display, Editor editor)
+    static void DrawBaseUI(string display, Editor editor)
     {
+        // Bottom Bar
         Raylib.DrawRectangle(0, Editor.height - 20, Editor.width, Editor.height, Color.DarkBlue);
-        Mfont.DrawText(DateTime.Now.ToString("HH:mm:ss tt"), 10, Editor.height - 15);
-        Mfont.DrawText(display, editor.padding, editor.padding, Mfont.CHAR_IMAGE_WIDTH);
-        Mfont.DrawCharacter(Convert.ToChar(3), editor.cursorX, editor.cursorY);
+        // Top Bar
+        Raylib.DrawRectangle(0, 0, Editor.width, 20, Color.DarkGreen);
+        // Bottom file name
+        Mfont.DrawText(currentFile, 5, Editor.height - Mfont.CHAR_IMAGE_HEIGHT - 3, Color.White, false);
+        // Draw Editor Contents
+        Mfont.DrawText(display, Editor.paddingX, Editor.paddingY, Color.White, false);
+        // Draw Time
+        Mfont.DrawText(DateTime.Now.ToString("HH:mm:ss tt"), Editor.width - 110, 3, Color.White, false);
+        // Draw Cursor
+        Mfont.DrawCharacter(Convert.ToChar(3), editor.cursorX, editor.cursorY, Color.White, false);
     }
+
+    static bool loadFile(Editor editor, string filePath, ref int startX, ref int startY)
+    {
+        try
+        {
+            // Get the first dropped file (in case multiple files were dropped)
+            // string filePath = droppedFiles[0];
+            string content = File.ReadAllText(filePath).Replace(System.Environment.NewLine, "\n").Replace("\t", "    ");
+            string filteredContent = "";
+            for (int i = 0; i < content.Length; i++)
+            {
+                if (!IsValidCharacter(content[i]))
+                    filteredContent += Convert.ToChar(2);
+                else
+                    filteredContent += content[i];
+            }
+
+            foreach (var innerList in editor._chars)
+            {
+                for (int i = 0; i < innerList.Count; i++)
+                {
+                    innerList[i] = '\0';  // Set each element to the null character
+                }
+            }
+            startX = 0;
+            startY = 0;
+
+            editor.ResetCursor();
+            // cursorX = padding;
+            // cursorY = padding;
+            // Add the file content character by character
+            for (int i = 0; i < filteredContent.Length; i++)
+            {
+                char c = filteredContent[i];
+                if (c == '\n')
+                {
+                    editor.AddAt(startX, startY, '\n');
+                    startY++;
+                    startX = 0;
+                    // cursorY += Mfont.CHAR_IMAGE_HEIGHT;
+                    // cursorX = padding;
+                    editor.MoveCursor(CursorPos.Down);
+                    editor.ResetCursorX();
+
+                }
+                else
+                {
+                    editor.AddAt(startX, startY, c);
+                    startX++;
+                    // cursorX += Mfont.CHAR_IMAGE_WIDTH;
+                    editor.MoveCursor(CursorPos.Right);
+                }
+            }
+
+            System.Console.WriteLine($"Loaded file: {filePath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Console.WriteLine($"Error loading file: {ex.Message}");
+            return false;
+        }
+    }
+
+    static bool IsValidCharacter(char c)
+    {
+        // Create a string of valid characters
+        string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~\n ";
+
+        // Check if the character is in the validChars string
+        return validChars.Contains(c);
+    }
+
 
     static string GetIncrementalFileName(string baseFileName, string extension)
     {

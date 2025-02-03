@@ -22,7 +22,9 @@ class Editor
     private int cols = (10 + height + 10) / Mfont.CHAR_IMAGE_HEIGHT;
     public static int width = 600;
     public static int height = 480;
-    public int padding { get; set; } = 10;
+    public static int padding { get; set; } = 10;
+    public static int paddingX { get; set; } = 10;
+    public static int paddingY { get; set; } = 30;
     public int cursorX { get; set; }
     public int cursorY { get; set; }
 
@@ -34,16 +36,18 @@ class Editor
             List<char> row = new List<char>(new char[cols]);
             _chars.Add(row);
         }
-        cursorX = padding;
-        cursorY = padding;
+        cursorX = paddingX;
+        cursorY = paddingY;
     }
-    public void ResetCursorX() => cursorX = padding;
-    public void ResetCursorY() => cursorY = padding;
+    public void ResetCursorX() => cursorX = paddingX;
+    public void ResetCursorY() => cursorY = paddingY;
 
     public void ResetCursor()
     {
-        cursorX = padding;
-        cursorY = padding;
+        // cursorX = paddingX;
+        // cursorY = paddingY;
+        ResetCursorX();
+        ResetCursorY();
     }
 
     public void MoveCursor(CursorPos pos)
